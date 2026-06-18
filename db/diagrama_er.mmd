@@ -1,0 +1,141 @@
+%% =============================================================================
+%%  SIGEC-PJ · Modelo Entidad-Relación propuesto (notación pata de gallo / crow's foot)
+%%  Notación formal solicitada por el docente (punto #3 del Avance 1).
+%%  Render: https://mermaid.live  o extensión Mermaid de VS Code.
+%%
+%%  Lectura de cardinalidades (lado || = uno y solo uno · lado o{ = cero o muchos):
+%%    A ||--o{ B  →  un A se relaciona con cero o muchos B; cada B pertenece a un A.
+%% =============================================================================
+erDiagram
+    PROVINCIA        ||--o{ CANTON            : "tiene"
+    CANTON           ||--o{ EDIFICIO          : "agrupa"
+    EDIFICIO         ||--o{ UBICACION_FISICA  : "contiene"
+    UBICACION_FISICA ||--o{ EQUIPO            : "aloja"
+    PLATAFORMA_VMS   ||--o{ EQUIPO            : "gestiona"
+    MODELO_EQUIPO    ||--o{ EQUIPO            : "clasifica"
+    PROVEEDOR        ||--o{ CONTRATACION      : "adjudica"
+    CONTRATACION     ||--o{ EQUIPO            : "adquiere"
+
+    EQUIPO           ||--o{ INTERFAZ_RED      : "expone"
+    EQUIPO           ||--o{ CREDENCIAL_EQUIPO : "protege"
+    EQUIPO           ||--o{ INCIDENTE         : "presenta"
+    EQUIPO           ||--o{ MOVIMIENTO_EQUIPO : "registra"
+    EQUIPO           |o--o{ MOVIMIENTO_EQUIPO : "sustituye"
+
+    TECNICO          ||--o{ INCIDENTE         : "atiende"
+    TECNICO          ||--o{ MOVIMIENTO_EQUIPO : "ejecuta"
+
+    %% ---- Correcciones del Avance 1: USUARIO_SISTEMA y BITACORA ya NO flotan ----
+    USUARIO_SISTEMA  ||--o{ BITACORA_AUDITORIA : "genera"
+    USUARIO_SISTEMA  ||--o{ MOVIMIENTO_EQUIPO  : "autoriza (#2)"
+    USUARIO_SISTEMA  ||--o{ INCIDENTE          : "registra (#2)"
+    USUARIO_SISTEMA  ||--o{ EQUIPO             : "da de alta (#2)"
+    TECNICO          ||--o| USUARIO_SISTEMA    : "tiene cuenta (#1)"
+
+    PROVINCIA {
+        smallint id_provincia PK
+        varchar  nombre
+    }
+    CANTON {
+        int      id_canton PK
+        smallint id_provincia FK
+        varchar  nombre
+    }
+    EDIFICIO {
+        int     id_edificio PK
+        int     id_canton FK
+        varchar cuenta_pj UK
+        varchar nombre
+        varchar direccion
+    }
+    UBICACION_FISICA {
+        int     id_ubicacion PK
+        int     id_edificio FK
+        varchar piso
+        varchar rack
+        varchar patchpanel
+        varchar puerto_switch
+    }
+    PLATAFORMA_VMS {
+        smallint id_plataforma PK
+        varchar  nombre
+        int      puerto_defecto
+    }
+    MODELO_EQUIPO {
+        int     id_modelo PK
+        varchar marca
+        varchar modelo
+        varchar tipo "CAMARA/GRABADOR/SERVIDOR/SWITCH"
+    }
+    PROVEEDOR {
+        int     id_proveedor PK
+        varchar nombre_empresa
+    }
+    CONTRATACION {
+        int     id_contratacion PK
+        int     id_proveedor FK
+        varchar num_sicop
+        int     plazo_garantia
+    }
+    EQUIPO {
+        int     id_equipo PK
+        int     id_modelo FK
+        int     id_ubicacion FK
+        smallint id_plataforma FK
+        int     id_contratacion FK
+        int     id_usuario_registro FK "autoría (#2)"
+        varchar nombre_equipo
+        varchar num_activo UK
+        varchar estado "ACTIVO/DANADO/RETIRADO/REEMPLAZADO"
+        date    venc_garantia
+    }
+    INTERFAZ_RED {
+        int     id_interfaz PK
+        int     id_equipo FK
+        inet    direccion_ip UK
+        macaddr mac UK
+    }
+    CREDENCIAL_EQUIPO {
+        int     id_credencial PK
+        int     id_equipo FK
+        varchar tipo "SO/VMS/TOOLBOX"
+        bytea   secreto_cifrado "AES-256-GCM"
+    }
+    TECNICO {
+        int     id_tecnico PK
+        varchar nombre
+        varchar correo UK
+    }
+    INCIDENTE {
+        int     id_incidente PK
+        int     id_equipo FK
+        int     id_tecnico FK
+        int     id_usuario_registro FK "autoría (#2)"
+        date    fecha_observacion
+        varchar estado "ABIERTO/PROCESO/CERRADO"
+    }
+    MOVIMIENTO_EQUIPO {
+        int     id_movimiento PK
+        int     id_equipo FK
+        int     id_tecnico FK
+        int     id_usuario FK "NOT NULL — quién (#2)"
+        varchar tipo "BAJA/REEMPLAZO/TRASLADO"
+        int     id_equipo_sustituto FK
+    }
+    USUARIO_SISTEMA {
+        int     id_usuario PK
+        int     id_tecnico FK "opcional (#1)"
+        varchar username UK
+        varchar hash_password "BCrypt"
+        varchar rol "ADMIN/TECNICO/CONSULTA"
+    }
+    BITACORA_AUDITORIA {
+        bigint  id_bitacora PK
+        int     id_usuario FK
+        varchar tabla_afectada "a qué tabla (#4)"
+        bigint  id_registro "a qué registro (#4)"
+        varchar accion
+        jsonb   datos_antes
+        jsonb   datos_despues
+        timestamptz fecha_hora
+    }
