@@ -9,9 +9,30 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface EquipoRepository extends JpaRepository<Equipo, Integer> {
 
     boolean existsByNumActivo(String numActivo);
+
+    // ---- Agregaciones para el dashboard ----
+
+    /** Conteo de equipos agrupados por estado: [estado, total]. */
+    @Query("select e.estado, count(e) from Equipo e group by e.estado")
+    List<Object[]> contarPorEstado();
+
+    /** Conteo de equipos por provincia: [provincia, total]. */
+    @Query("""
+            select pr.nombre, count(e)
+            from Equipo e
+                join e.ubicacion u
+                join u.edificio ed
+                join ed.canton c
+                join c.provincia pr
+            group by pr.nombre
+            order by pr.nombre
+            """)
+    List<Object[]> contarPorProvincia();
 
     /**
      * Busqueda paginada con filtros opcionales (todos pueden ir nulos).

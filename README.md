@@ -92,9 +92,15 @@ funcionales. Detalle ampliado en [`backend/README.md`](backend/README.md).
 - **Catálogos:** endpoints de lectura para poblar selectores.
 - **Inventario:** CRUD de equipos, búsqueda paginada (estado / provincia / texto
   / IP), interfaces de red, credenciales cifradas y vista de garantías por vencer.
+- **Incidentes:** flujo ITIL (`ABIERTO` / `PROCESO` / `CERRADO`) con asignación de
+  técnico, cierre con fecha de reparación y trazabilidad por equipo.
+- **Movimientos:** bajas, reemplazos y traslados que ajustan el estado del equipo y
+  registran al usuario autor.
+- **Dashboard:** endpoints REST de indicadores (equipos por estado/provincia,
+  incidentes abiertos y por estado, garantías por vencer, tiempo medio de reparación).
 
-> Pendiente en próximas pasadas: módulos de **incidentes**, **movimientos**,
-> **dashboard** y el **frontend Vue 3**.
+> Pendiente en próximas pasadas: el **frontend Vue 3**, el script de migración
+> ODS → PostgreSQL y el montaje/guía del clúster de alta disponibilidad.
 
 ### Requisitos
 

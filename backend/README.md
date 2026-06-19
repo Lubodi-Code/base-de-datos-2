@@ -14,8 +14,23 @@ Implementado y compilando:
 - **Cifrado**: `AesGcmCipherService` (AES-256-GCM) para los secretos de equipos (sustituye las credenciales en texto plano del ODS).
 - **Catálogos**: endpoints de lectura para poblar selectores (provincias, cantones, edificios, ubicaciones, modelos, plataformas, contrataciones, técnicos).
 - **Inventario (núcleo)**: CRUD de equipos, búsqueda paginada (estado / provincia / texto / IP), interfaces de red (`inet`/`macaddr`), credenciales cifradas y vista de garantías por vencer.
+- **Incidentes**: registro de fallas con flujo de estados ITIL (`ABIERTO` / `PROCESO` / `CERRADO`), asignación de técnico, cierre con fecha de reparación y trazabilidad por equipo.
+- **Movimientos**: bajas, reemplazos y traslados con motivo, técnico y equipo sustituto; cada movimiento ajusta el estado del equipo (BAJA → `RETIRADO`, REEMPLAZO → `REEMPLAZADO`) y registra el usuario autor.
+- **Dashboard**: endpoints REST de indicadores (totales y equipos por estado/provincia, incidentes abiertos y por estado, garantías por vencer, tiempo medio de reparación).
 
-Pendiente (siguientes pasadas): módulos de **incidentes**, **movimientos**, **dashboard** y el **frontend Vue 3**.
+Pendiente (siguientes pasadas): **frontend Vue 3**, script de migración ODS → PostgreSQL y montaje/guía del clúster de alta disponibilidad.
+
+## Endpoints principales
+
+| Recurso | Método | Ruta |
+|---------|--------|------|
+| Inventario | `GET/POST/PUT` | `/api/v1/equipos` |
+| Incidentes | `GET/POST/PUT` | `/api/v1/incidentes` (filtros `estado`, `idEquipo`) |
+| Cerrar incidente | `PATCH` | `/api/v1/incidentes/{id}/cerrar` |
+| Movimientos | `GET/POST` | `/api/v1/movimientos` (filtro `idEquipo`) |
+| Dashboard | `GET` | `/api/v1/dashboard/resumen`, `/equipos-por-provincia`, `/incidentes-por-estado` |
+
+La escritura (`POST/PUT/PATCH`) requiere rol `ADMIN` o `TECNICO`; la lectura, cualquier usuario autenticado.
 
 ## Requisitos
 
