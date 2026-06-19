@@ -52,7 +52,21 @@ function salir() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 7h11l-3-3 M17 17H6l3 3"/></svg>
           <span>Movimientos</span>
         </RouterLink>
+        <RouterLink to="/garantias">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4 M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"/></svg>
+          <span>Garantías</span>
+        </RouterLink>
       </nav>
+
+      <template v-if="auth.esAdmin">
+        <p class="nav-rotulo">Administración</p>
+        <nav>
+          <RouterLink to="/usuarios">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5 M17 11l2 2 3-3.5"/></svg>
+            <span>Usuarios</span>
+          </RouterLink>
+        </nav>
+      </template>
 
       <div class="pie">
         <b>Fase 2</b> · Base de Datos II<br />
