@@ -1,0 +1,41 @@
+# =============================================================================
+#  Perfil de PRODUCCIÓN
+#  Activar con:  SPRING_PROFILES_ACTIVE=prod
+#
+#  A diferencia de application.yml (que trae valores de DESARROLLO por defecto),
+#  aquí los secretos NO tienen valor por defecto: si falta una variable de entorno
+#  la aplicación NO arranca (fail-fast), evitando desplegar con claves de demo.
+#
+#  Variables requeridas:
+#    DB_URL        jdbc:postgresql://host:5432/sigecpj
+#    DB_USER       usuario de la base de datos
+#    DB_PASSWORD   contraseña de la base de datos
+#    JWT_SECRET    clave HS256 en Base64 (>= 256 bits)
+#    AES_KEY       clave AES-256 en Base64 (32 bytes)
+# =============================================================================
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+
+sigec:
+  # Sin valores por defecto a propósito: el arranque falla si no se inyectan.
+  bootstrap-admin: ${SIGEC_BOOTSTRAP_ADMIN:false}
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration-minutes: ${JWT_EXP_MIN:120}
+    aes:
+      key-base64: ${AES_KEY}
+
+logging:
+  level:
+    org.hibernate.SQL: warn

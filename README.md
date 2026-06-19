@@ -15,8 +15,25 @@ con auditoría a nivel de base de datos.
 
 | Carpeta | Contenido |
 |---------|-----------|
-| [`db/`](db/) | Diseño de la base de datos: DDL de PostgreSQL, diagrama E-R y bitácora de correcciones. |
+| [`db/`](db/) | Diseño de la base de datos: DDL de PostgreSQL, datos semilla, diagrama E-R y bitácora de correcciones. |
 | [`backend/`](backend/) | API REST en Java 21 + Spring Boot 3.3 (arquitectura por capas y módulos). |
+| [`frontend/`](frontend/) | SPA en Vue 3 + Vite (inventario, incidentes, movimientos, tablero, garantías, usuarios). |
+
+## 🐳 Levantar todo con Docker (recomendado)
+
+Con Docker en marcha, un solo comando levanta base de datos, backend y frontend:
+
+```bash
+cp .env.example .env          # ajustar secretos (JWT_SECRET, AES_KEY, contraseña BD)
+docker compose up --build
+```
+
+- Frontend (SPA): **http://localhost:8088**  · usuario demo `admin / admin123`
+- API / Swagger: **http://localhost:8080/swagger-ui.html**
+
+La BD aplica `db/sigec_ddl.sql` + `db/sigec_seed.sql` automáticamente al inicializarse.
+El backend corre con el perfil `prod` (secretos por variables de entorno, sin valores
+de demostración embebidos).
 
 ```
 .

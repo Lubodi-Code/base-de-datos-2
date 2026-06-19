@@ -71,7 +71,30 @@ curl -s http://localhost:8080/api/v1/equipos \
   -H "Authorization: Bearer <token>"
 ```
 
+## Pruebas
+
+```bash
+./mvnw test
+```
+
+Tests unitarios (JUnit 5 + Mockito, sin base de datos): cifrado AES-GCM
+(`AesGcmCipherServiceTest`) y reglas de negocio de movimientos e incidentes.
+
 ## Configuración sensible
 
 `JWT_SECRET` y `AES_KEY` (Base64) tienen valores **solo de desarrollo** en
-`application.yml`. En producción deben inyectarse por variables de entorno / KMS.
+`application.yml`. En producción se activa el perfil `prod`, donde esos secretos
+**no** tienen valor por defecto (el arranque falla si faltan):
+
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+export DB_URL=jdbc:postgresql://db:5432/sigecpj
+export DB_USER=sigec
+export DB_PASSWORD=...
+export JWT_SECRET=$(openssl rand -base64 48)   # >= 256 bits
+export AES_KEY=$(openssl rand -base64 32)       # 32 bytes (AES-256)
+./mvnw spring-boot:run
+```
+
+Ver [`application-prod.yml`](src/main/resources/application-prod.yml). Con
+`docker compose` estas variables se inyectan desde `.env`.

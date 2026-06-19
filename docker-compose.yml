@@ -1,0 +1,65 @@
+# =============================================================================
+#  SIGEC-PJ — Orquestación local completa: PostgreSQL + Backend + Frontend
+#
+#  Uso:
+#     cp .env.example .env      # ajustar secretos
+#     docker compose up --build
+#
+#  Servicios:
+#     db        PostgreSQL 16 (aplica db/sigec_ddl.sql y db/sigec_seed.sql al
+#               inicializar un volumen vacío)
+#     backend   API Spring Boot (perfil prod) en :8080
+#     frontend  SPA Vue 3 servida por nginx en :8088 (proxy /api -> backend)
+# =============================================================================
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - sigec_pgdata:/var/lib/postgresql/data
+      - ./db/sigec_ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql:ro
+      - ./db/sigec_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      AES_KEY: ${AES_KEY}
+      SIGEC_BOOTSTRAP_ADMIN: "true"   # crea admin/admin123 en la demo
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080' 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8088:80"
+    restart: unless-stopped
+
+volumes:
+  sigec_pgdata:
