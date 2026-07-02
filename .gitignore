@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Certificados TLS autofirmados (generar localmente, no versionar)
+haproxy/certs/
