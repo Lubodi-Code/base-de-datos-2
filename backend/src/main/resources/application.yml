@@ -1,0 +1,56 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: sigec-pj
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sigecpj}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      pool-name: sigec-pool
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      # El esquema lo gobierna db/sigec_ddl.sql (incluye tipos nativos inet/macaddr/jsonb
+      # y triggers). Hibernate no genera ni valida el esquema.
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: America/Costa_Rica
+  jackson:
+    default-property-inclusion: non_null
+
+# Parametros propios del sistema
+sigec:
+  security:
+    jwt:
+      # Clave HS256 de desarrollo (Base64, >= 256 bits). En produccion: variable de entorno.
+      secret: ${JWT_SECRET:c2lnZWMtcGotZGV2LXNlY3JldC1jYW1iaWFyLWVuLXByb2R1Y2Npb24tMjAyNg==}
+      expiration-minutes: ${JWT_EXP_MIN:120}
+    aes:
+      # Clave AES-256 de desarrollo (Base64, 32 bytes). En produccion: variable de entorno / KMS.
+      key-base64: ${AES_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    org.hibernate.SQL: info
