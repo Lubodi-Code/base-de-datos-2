@@ -59,15 +59,29 @@ async function ingresar() {
         <p class="rotulo-acceso">Acceso restringido</p>
         <h2>Iniciar sesión</h2>
 
-        <div v-if="error" class="alerta error">{{ error }}</div>
+        <div v-if="error" class="alerta error" role="alert" aria-live="polite">{{ error }}</div>
 
         <div class="campo">
-          <label>Usuario</label>
-          <input v-model="username" autocomplete="username" required />
+          <label for="login-username">Usuario</label>
+          <input
+            id="login-username"
+            v-model="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            required
+          />
         </div>
         <div class="campo">
-          <label>Contraseña</label>
-          <input v-model="password" type="password" autocomplete="current-password" required />
+          <label for="login-password">Contraseña</label>
+          <input
+            id="login-password"
+            v-model="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
         </div>
 
         <button type="submit" :disabled="cargando">

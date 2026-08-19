@@ -1,14 +1,9 @@
-# =============================================================================
-#  Patroni configuration for node 1 (patroni-1)
-#  SIGEC-PJ Fase 3 — PostgreSQL HA Cluster
-# =============================================================================
-
 scope: sigec-cluster
-name: patroni-1
+name: patroni-3
 
 restapi:
   listen: 0.0.0.0:8008
-  connect_address: patroni-1:8008
+  connect_address: patroni-3:8008
 
 bootstrap:
   dcs:
@@ -38,7 +33,7 @@ bootstrap:
 
 postgresql:
   listen: 0.0.0.0:5432
-  connect_address: patroni-1:5432
+  connect_address: patroni-3:5432
   data_dir: /var/lib/postgresql/data/pgdata
   bin_dir: /usr/lib/postgresql/16/bin
 
@@ -71,15 +66,9 @@ postgresql:
     work_mem: 2621kB
     min_wal_size: 1GB
     max_wal_size: 4GB
-
-    # Replicación síncrona para RPO = 0 (synchronous_standby_names lo gestiona Patroni vía synchronous_mode)
     synchronous_commit: on
-
-    # WAL archiving con pgBackRest
     archive_mode: on
     archive_command: pgbackrest --stanza=sigecpj archive-push %p
-
-    # Logging
     logging_collector: on
     log_destination: stderr
     log_line_prefix: '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '

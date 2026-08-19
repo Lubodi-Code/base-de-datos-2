@@ -4,9 +4,10 @@
 --      psql -U postgres -d sigecpj -f db/sigec_ddl.sql
 --      psql -U postgres -d sigecpj -f db/sigec_seed.sql
 --
---  Idempotente: usa ON CONFLICT DO NOTHING, de modo que puede ejecutarse varias
---  veces sin duplicar filas. No incluye usuarios del sistema (el backend crea el
---  ADMIN inicial al arrancar).
+--  Los catálogos usan ON CONFLICT DO NOTHING. El script completo está pensado
+--  para el bootstrap de una base vacía.
+--  El usuario ADMIN de demostracion se crea aqui para que los movimientos
+--  iniciales puedan conservar su autoria desde el bootstrap.
 -- =============================================================================
 
 SET client_encoding = 'UTF8';
@@ -278,18 +279,25 @@ ON CONFLICT DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- Movimientos de equipo (≥ 5 movimientos incluyendo reemplazo de equipo dañado)
 -- ---------------------------------------------------------------------------
+-- Usuario de demostracion. El hash BCrypt corresponde a admin123 y debe
+-- sustituirse o deshabilitarse fuera de ambientes de prueba.
+INSERT INTO usuario_sistema (username, hash_password, nombre_completo, rol, activo)
+VALUES ('admin', '$2a$12$xNESx1q8b2TVjVpXiDBbWOh6MK46Uhaga0XsM4kvicgrHbWm2F1bG',
+        'Administrador SIGEC', 'ADMIN', TRUE)
+ON CONFLICT (username) DO NOTHING;
+
 INSERT INTO movimiento_equipo (id_equipo, id_tecnico, id_usuario, tipo, fecha, motivo, id_equipo_sustituto)
-SELECT e.id_equipo, t.id_tecnico, u.id_usuario, v.tipo, v.fecha::timestamp, v.motivo, v.sustituto
+SELECT e.id_equipo, t.id_tecnico, u.id_usuario, v.tipo, v.fecha::timestamp, v.motivo, es.id_equipo
 FROM (VALUES
     -- Reemplazo del equipo dañado ACT-0003 por ACT-0014
     ('ACT-0003', 'carlos.mora@poder-judicial.go.cr', 'admin', 'REEMPLAZO', '2026-06-01 10:30:00',
      'NVR OIJ Atenas falló tras tormenta eléctrica, se reemplaza por unidad nueva', 'ACT-0014'),
 
     -- Otros movimientos de ejemplo
-    ('ACT-0031', 'juan.perez@poder-judicial.go.cr', 'admin', 'RETIRADO', '2026-07-15 14:00:00',
+    ('ACT-0031', 'juan.perez@poder-judicial.go.cr', 'admin', 'BAJA', '2026-07-15 14:00:00',
      'NVR backup alcanzó fin de vida útil, se retiró de servicio', NULL),
 
-    ('ACT-0018', 'maria.solano@poderjudicial.go.cr', 'admin', 'TRASLADO', '2026-06-10 09:15:00',
+    ('ACT-0018', 'maria.solano@poder-judicial.go.cr', 'admin', 'TRASLADO', '2026-06-10 09:15:00',
      'NVR Heredia trasladado de R-30 a R-31 por reorganización de rack', NULL),
 
     ('ACT-0002', 'carlos.mora@poder-judicial.go.cr', 'admin', 'TRASLADO', '2026-05-20 11:45:00',
@@ -298,7 +306,7 @@ FROM (VALUES
     ('ACT-0008', 'juan.perez@poder-judicial.go.cr', 'admin', 'BAJA', '2026-07-25 16:30:00',
      'Switch obsoleto dado de baja tras actualización de infraestructura', NULL),
 
-    ('ACT-0012', 'maria.solano@poderjudicial.go.cr', 'admin', 'TRASLADO', '2026-08-02 08:00:00',
+    ('ACT-0012', 'maria.solano@poder-judicial.go.cr', 'admin', 'TRASLADO', '2026-08-02 08:00:00',
      'NVR trasladado temporalmente por mantenimiento de rack', NULL),
 
     ('ACT-0027', 'carlos.mora@poder-judicial.go.cr', 'admin', 'TRASLADO', '2026-08-08 13:20:00',
@@ -307,6 +315,14 @@ FROM (VALUES
 JOIN equipo e ON e.num_activo = v.num_activo
 JOIN tecnico t ON t.correo = v.correo_tecnico
 JOIN usuario_sistema u ON u.username = v.username
+LEFT JOIN equipo es ON es.num_activo = v.sustituto
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM movimiento_equipo m
+    WHERE m.id_equipo = e.id_equipo
+      AND m.tipo = v.tipo
+      AND m.fecha = v.fecha::timestamp
+)
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================

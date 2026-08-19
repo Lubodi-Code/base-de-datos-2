@@ -12,11 +12,16 @@ restapi:
 
 bootstrap:
   dcs:
-    ttl: 30
-    loop_wait: 10
-    retry_timeout: 10
+    ttl: 20
+    loop_wait: 2
+    retry_timeout: 3
     maximum_lag_on_failover: 1048576
+    maximum_lag_on_syncnode: 1048576
     synchronous_mode: true
+    synchronous_node_count: 1
+    primary_start_timeout: 0
+    primary_stop_timeout: 5
+    failsafe_mode: true
     postgresql:
       use_pg_rewind: true
       parameters:
@@ -26,6 +31,7 @@ bootstrap:
     - encoding: UTF8
     - data-checksums
   pg_hba:
+    - local all postgres trust
     - host all all 0.0.0.0/0 scram-sha-256
     - host replication replicator 0.0.0.0/0 scram-sha-256
   post_bootstrap: sh /etc/patroni/post_bootstrap.sh
@@ -48,6 +54,7 @@ postgresql:
     - basebackup
 
   pg_hba:
+    - local all postgres trust
     - host all all 0.0.0.0/0 scram-sha-256
     - host replication replicator 0.0.0.0/0 scram-sha-256
 
@@ -70,7 +77,7 @@ postgresql:
 
     # WAL archiving con pgBackRest
     archive_mode: on
-    archive_command: pgbackrest archive-push %p
+    archive_command: pgbackrest --stanza=sigecpj archive-push %p
 
     # Logging
     logging_collector: on
@@ -84,5 +91,7 @@ tags:
   nosync: false
 
 etcd3:
-  host: etcd
-  port: 2379
+  hosts:
+    - etcd-1:2379
+    - etcd-2:2379
+    - etcd-3:2379
