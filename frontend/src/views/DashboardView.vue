@@ -1,24 +1,57 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import http, { mensajeError } from '../api/http';
 
-const resumen = ref(null);
-const error = ref('');
-const cargando = ref(true);
+const CACHE_KEY = 'sigec_dashboard_resumen';
 
-const maxProvincia = ref(1);
-
-onMounted(async () => {
+function leerUltimoResumen() {
   try {
-    const { data } = await http.get('/dashboard/resumen');
-    resumen.value = data;
-    maxProvincia.value = Math.max(1, ...(data.equiposPorProvincia || []).map((p) => p.total));
-  } catch (e) {
-    error.value = mensajeError(e);
-  } finally {
-    cargando.value = false;
+    return JSON.parse(sessionStorage.getItem(CACHE_KEY)) || null;
+  } catch {
+    sessionStorage.removeItem(CACHE_KEY);
+    return null;
   }
-});
+}
+
+const resumen = ref(leerUltimoResumen());
+const error = ref('');
+const solicitando = ref(false);
+const reconectando = ref(false);
+
+const maxProvincia = computed(() =>
+  Math.max(1, ...(resumen.value?.equiposPorProvincia || []).map((p) => p.total))
+);
+
+async function cargarResumen() {
+  if (solicitando.value) return;
+
+  solicitando.value = true;
+  reconectando.value = false;
+  error.value = '';
+
+  try {
+    const { data } = await http.get('/dashboard/resumen', {
+      onReintentoTransitorio: () => {
+        reconectando.value = true;
+      },
+    });
+    resumen.value = data;
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch (e) {
+    if ([502, 503].includes(e.response?.status)) {
+      error.value = resumen.value
+        ? 'No se pudo actualizar el tablero. Los últimos datos permanecen visibles.'
+        : 'No se pudo restablecer la conexión con el servidor.';
+    } else {
+      error.value = mensajeError(e);
+    }
+  } finally {
+    solicitando.value = false;
+    reconectando.value = false;
+  }
+}
+
+onMounted(cargarResumen);
 
 function dias(n) {
   return n == null ? '—' : `${Number(n).toFixed(1)} días`;
@@ -26,10 +59,28 @@ function dias(n) {
 </script>
 
 <template>
-  <div v-if="error" class="alerta error">{{ error }}</div>
-  <p v-if="cargando" class="vacio">Cargando indicadores…</p>
+  <section class="dashboard" :aria-busy="solicitando">
+    <div
+      v-if="reconectando || error"
+      class="alerta alerta-con-accion"
+      :class="reconectando ? 'reconexion' : 'error'"
+      :role="reconectando ? 'status' : 'alert'"
+      aria-live="polite"
+    >
+      <span>{{ reconectando ? 'Reconectando con el servidor…' : error }}</span>
+      <button
+        type="button"
+        class="secundario pequeno"
+        :disabled="solicitando"
+        @click="cargarResumen"
+      >
+        {{ solicitando ? 'Reintentando…' : 'Reintentar' }}
+      </button>
+    </div>
 
-  <template v-else-if="resumen">
+    <p v-if="solicitando && !resumen && !reconectando" class="vacio">Cargando indicadores…</p>
+
+    <template v-if="resumen">
     <div class="grid kpis" style="margin-bottom: 18px">
       <div class="card kpi">
         <div class="valor">{{ resumen.totalEquipos }}</div>
@@ -84,5 +135,6 @@ function dias(n) {
         </table>
       </div>
     </div>
-  </template>
+    </template>
+  </section>
 </template>
