@@ -235,7 +235,7 @@ docker exec -it sigec-patroni-2 patronictl list
 **Presentador:**
 > "Para cerrar, veamos los números medidos:
 > 
-> **RTO medido:** 5.33 segundos promedio (objetivo: < 60 s) ✅
+> **RTO medido:** 24.327 segundos (objetivo: < 60 s) ✅
 > **RPO medido:** 0 (ninguna pérdida de datos) ✅
 > **Disponibilidad:** 99.5% = máximo 43.8 horas de caída por año ✅
 > 

@@ -25,15 +25,33 @@ Con Docker en marcha, un solo comando levanta base de datos, backend y frontend:
 
 ```bash
 cp .env.example .env          # ajustar secretos (JWT_SECRET, AES_KEY, contraseña BD)
-docker compose up --build
+docker compose up -d --build
 ```
 
-- Frontend (SPA): **http://localhost:8088**  · usuario demo `admin / admin123`
-- API / Swagger: **http://localhost:8080/swagger-ui.html**
+- Aplicación HA (HTTPS autofirmado): **https://localhost:8443**
+- Frontend directo: **http://localhost:8088** · usuario demo `admin / admin123`
+- Swagger por HAProxy: **https://localhost:8443/swagger-ui.html**
+- Estado de HAProxy: **http://localhost:7000** · `admin / admin123`
 
 La BD aplica `db/sigec_ddl.sql` + `db/sigec_seed.sql` automáticamente al inicializarse.
 El backend corre con el perfil `prod` (secretos por variables de entorno, sin valores
 de demostración embebidos).
+
+### Alta disponibilidad incluida
+
+La topología local usa tres miembros de etcd, tres nodos PostgreSQL 16 administrados
+por Patroni, una réplica síncrona, HAProxy y dos instancias activas del backend. El
+puerto `5000` siempre apunta al primario y `5001` distribuye lecturas entre réplicas.
+Los WAL y respaldos completos se conservan cifrados mediante pgBackRest.
+
+Para provocar la pérdida abrupta del líder, medir RTO/RPO y reincorporarlo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test-failover.ps1
+```
+
+La corrida de referencia del 19-08-2026 produjo **RTO 24,327 s** y **RPO 0**.
+El procedimiento y sus límites están en [`docs/PRUEBA_FAILOVER.md`](docs/PRUEBA_FAILOVER.md).
 
 ```
 .
@@ -116,8 +134,8 @@ funcionales. Detalle ampliado en [`backend/README.md`](backend/README.md).
 - **Dashboard:** endpoints REST de indicadores (equipos por estado/provincia,
   incidentes abiertos y por estado, garantías por vencer, tiempo medio de reparación).
 
-> Pendiente en próximas pasadas: el **frontend Vue 3**, el script de migración
-> ODS → PostgreSQL y el montaje/guía del clúster de alta disponibilidad.
+> Pendiente en próximas pasadas: el script de migración ODS → PostgreSQL y el
+> endurecimiento del despliegue para infraestructura productiva separada.
 
 ### Requisitos
 
@@ -137,8 +155,9 @@ export DB_PASSWORD=postgres
 ./mvnw spring-boot:run     # o: mvn spring-boot:run
 ```
 
-Al primer arranque se crea el usuario `admin / admin123` (cambiar en producción;
-desactivar con `sigec.bootstrap-admin=false`).
+Al inicializar la base se crea el usuario de demostración `admin / admin123` para
+conservar también la autoría de los movimientos semilla. Debe cambiarse o
+deshabilitarse en producción.
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health: `http://localhost:8080/actuator/health`

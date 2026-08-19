@@ -19,6 +19,11 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    hikari:
+      connection-timeout: 5000
+      validation-timeout: 2000
+      keepalive-time: 30000
+      max-lifetime: 600000
   jpa:
     hibernate:
       ddl-auto: none
