@@ -50,8 +50,11 @@ Para provocar la pérdida abrupta del líder, medir RTO/RPO y reincorporarlo:
 powershell -ExecutionPolicy Bypass -File .\scripts\test-failover.ps1
 ```
 
-La corrida de referencia del 19-08-2026 produjo **RTO 24,327 s** y **RPO 0**.
-El procedimiento y sus límites están en [`docs/PRUEBA_FAILOVER.md`](docs/PRUEBA_FAILOVER.md).
+La corrida de referencia más reciente produjo **RTO de escritura 25,359 s**, **RTO de
+API 27,475 s** y **RPO 0**. Durante
+la promoción, el dashboard conserva los últimos datos y reintenta automáticamente
+las respuestas 502/503. Patroni 4.1.5 impone un `ttl` mínimo de 20 segundos; el
+procedimiento y ese límite están en [`docs/PRUEBA_FAILOVER.md`](docs/PRUEBA_FAILOVER.md).
 
 ```
 .

@@ -364,6 +364,9 @@ label {
 .alerta.error::before { content: '!'; }
 .alerta.ok { background: var(--green-soft); color: var(--green); border-color: #c4ddca; }
 .alerta.ok::before { content: '✓'; }
+.alerta.reconexion { background: var(--amber-soft); color: #76530e; border-color: #dfc27d; }
+.alerta-con-accion { justify-content: space-between; flex-wrap: wrap; }
+.alerta-con-accion button { margin-left: auto; min-height: 44px; }
 .vacio { padding: 30px; text-align: center; color: var(--faint); font-size: 13px; }
 
 /* Barras del dashboard */
